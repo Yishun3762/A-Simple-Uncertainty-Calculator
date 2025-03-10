@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>科学测量数据处理</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjs@11.8.0/lib/browser/math.min.js"></script>
+    <style>
+        /* CSS 样式保持不变 */
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #6b8cae;
+            --accent-color: #9bb0c8;
+            --background-color: #f5f7fa;
+            --card-color: #ffffff;
+            --text-color: #333333;
+            --border-radius: 8px;
+            --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+        }
+
+        h1 {
+            font-weight: 300;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background: var(--card-color);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: var(--box-shadow);
+        }
+
+        .card-title {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--accent-color);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .result-container {
+            margin-top: 15px;
+        }
+
+        .result-group {
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+
+        th, td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        .flex-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .flex-item {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .input-group label {
+            flex: 0 0 80px;
+            margin-bottom: 0;
+        }
+
+        .input-group input, .input-group select {
+            flex: 1;
+        }
+
+        .unit-select {
+            flex: 0 0 100px !important;
+        }
+
+        .remove-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .add-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+            margin-bottom: 15px;
+        }
+
+        .instrument-selector {
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+
+        .unit-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .unit-info {
+            margin-top: 5px;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .data-container {
+            margin-top: 10px;
+        }
+
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>科学测量数据处理</h1>
+            <p>精确计算测量不确定度与数据可视化</p>
+        </header>
+
+        <div class="card">
+            <h2 class="card-title">直接测量量</h2>
+            <div id="direct-measurements">
+                <!-- 直接测量量将在这里动态添加 -->
+            </div>
+            <button type="button" class="add-btn" onclick="addMeasurement()">添加测量量</button>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">间接测量量</h2>
+            <div id="indirect-measurements">
+                <!-- 间接测量量将在这里动态添加 -->
+            </div>
+            <button type="button" class="add-btn" onclick="addIndirectMeasurement()">添加间接测量量</button>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">计算结果</h2>
+            <button type="button" onclick="calculateAll()">计算结果</button>
+            <div id="results" class="result-container">
+                <!-- 计算结果将在这里显示 -->
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">数据可视化</h2>
+            <div class="form-group">
+                <div class="input-group">
+                    <label>X 轴：</label>
+                    <select id="x-axis-select"></select>
+                    <select id="x-axis-unit" class="unit-select"></select>
+                </div>
+                <div class="input-group">
+                    <label>Y 轴：</label>
+                    <select id="y-axis-select"></select>
+                    <select id="y-axis-unit" class="unit-select"></select>
+                </div>
+                <div class="input-group">
+                    <label>线性回归：</label>
+                    <input type="checkbox" id="regression-checkbox" style="width: auto;">
+                </div>
+                <button type="button" onclick="plotData()">绘制图表</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="data-chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let measurementCounter = 0;
+        let chart = null;
+
+        // 添加直接测量量
+        function addMeasurement() {
+            const container = document.getElementById('direct-measurements');
+            const groupId = measurementCounter++;
+            
+            const formGroup = document.createElement('div');
+            formGroup.className = 'form-group';
+            formGroup.id = `measurement-${groupId}`;
+            
+            // 物理量类型和符号输入
+            formGroup.innerHTML = `
+                <div class="input-group">
+                    <label>物理量类型</label>
+                    <select class="quantity-type" onchange="updateUnitOptions(this, ${groupId})">
+                        <option value="length">长度</option>
+                        <option value="mass">质量</option>
+                        <option value="time">时间</option>
+                        <option value="current">电流</option>
+                        <option value="voltage">电压</option>
+                        <option value="temperature">温度</option>
+                        <option value="angle">角度</option>
+                        <option value="dimensionless">无量纲</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>符号</label>
+                    <input type="text" class="symbol" placeholder="如：L, m, t">
+                    <button type="button" class="remove-btn" onclick="removeMeasurement(${groupId})">删除</button>
+                </div>
+                <div class="instrument-selector">
+                    <label>测量仪器</label>
+                    <div class="input-group">
+                        <select class="instrument-select" onchange="updateInstrumentError(this)">
+                            <option value="vernier-caliper">游标卡尺</option>
+                            <option value="micrometer">千分尺</option>
+                            <option value="digital-multimeter">数字万用表</option>
+                            <option value="analog-multimeter">指针万用表</option>
+                            <option value="electronic-balance">电子天平</option>
+                            <option value="stopwatch">秒表</option>
+                            <option value="custom">自定义</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>仪器误差</label>
+                        <input type="number" class="instrument-error" step="any" value="0.02">
+                        <select class="instrument-error-unit unit-select">
+                            <!-- 单位选项将根据物理量类型动态添加 -->
+                        </select>
+                    </div>
+                </div>
+                <div class="data-container" id="data-container-${groupId}">
+                    <label>测量数据</label>
+                    <!-- 数据行将在这里添加 -->
+                </div>
+                <button type="button" class="add-btn" onclick="addDataRow(${groupId})">添加数据点</button>
+            `;
+            
+            container.appendChild(formGroup);
+            
+            // 初始化单位选择器
+            const quantityType = formGroup.querySelector('.quantity-type').value;
+            updateErrorUnitOptions(formGroup.querySelector('.instrument-error-unit'), quantityType);
+            updateInstrumentError(formGroup.querySelector('.instrument-select'));
+            
+            // 添加第一个数据点
+            addDataRow(groupId);
+        }
+
+        // 添加数据行
+        function addDataRow(groupId) {
+            const container = document.getElementById(`data-container-${groupId}`);
+            const dataRowId = container.children.length;
+            
+            const dataRow = document.createElement('div');
+            dataRow.className = 'input-group';
+            
+            // 获取当前物理量类型
+            const quantityType = document.querySelector(`#measurement-${groupId} .quantity-type`).value;
+            
+            // 创建数据行输入
+            dataRow.innerHTML = `
+                <label>数据 ${dataRowId + 1}</label>
+                <input type="number" class="data-value" step="any">
+                <select class="data-unit unit-select">
+                    <!-- 单位选项将根据物理量类型动态添加 -->
+                </select>
+                <button type="button" class="remove-btn" onclick="removeDataRow(this)">-</button>
+            `;
+            
+            container.appendChild(dataRow);
+            
+            // 初始化单位选择器
+            updateUnitOptions(document.querySelector(`#measurement-${groupId} .quantity-type`), groupId);
+        }
+
+        // 添加间接测量量
+        function addIndirectMeasurement() {
+            const container = document.getElementById('indirect-measurements');
+            const groupId = 'indirect-' + measurementCounter++;
+            
+            const formGroup = document.createElement('div');
+            formGroup.className = 'form-group';
+            formGroup.id = groupId;
+            
+            formGroup.innerHTML = `
+                <div class="input-group">
+                    <label>物理量类型</label>
+                    <select class="quantity-type" onchange="updateIndirectUnitOptions(this)">
+                        <option value="length">长度</option>
+                        <option value="mass">质量</option>
+                        <option value="time">时间</option>
+                        <option value="current">电流</option>
+                        <option value="voltage">电压</option>
+                        <option value="temperature">温度</option>
+                        <option value="angle">角度</option>
+                        <option value="dimensionless">无量纲</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>符号</label>
+                    <input type="text" class="symbol" placeholder="如：A, V, P">
+                    <button type="button" class="remove-btn" onclick="removeIndirectMeasurement('${groupId}')">删除</button>
+                </div>
+                <div class="input-group">
+                    <label>公式</label>
+                    <input type="text" class="formula" placeholder="如：L*W 或 sin(a)">
+                </div>
+                <div class="input-group">
+                    <label>输出单位</label>
+                    <select class="output-unit unit-select">
+                        <!-- 单位选项将根据物理量类型动态添加 -->
+                    </select>
+                </div>
+                <div class="unit-info">
+                    提示: 在公式中使用直接测量量的符号。支持 +, -, *, /, ^, sin(), cos(), tan(), sqrt() 等数学函数。
+                </div>
+            `;
+            
+            container.appendChild(formGroup);
+            
+            // 初始化输出单位选择器
+            updateIndirectUnitOptions(formGroup.querySelector('.quantity-type'));
+        }
+
+        // 更新单位选择器选项
+        function updateUnitOptions(selectElement, groupId) {
+            const quantityType = selectElement.value;
+            const formGroup = document.getElementById(`measurement-${groupId}`);
+            
+            // 更新仪器误差单位
+            updateErrorUnitOptions(formGroup.querySelector('.instrument-error-unit'), quantityType);
+            
+            // 更新所有数据单位选择器
+            const dataUnitSelects = formGroup.querySelectorAll('.data-unit');
+            dataUnitSelects.forEach(select => {
+                updateUnitSelectOptions(select, quantityType);
+            });
+        }
+        
+        // 更新间接测量量的单位选择器
+        function updateIndirectUnitOptions(selectElement) {
+            const quantityType = selectElement.value;
+            const formGroup = selectElement.closest('.form-group');
+            const outputUnitSelect = formGroup.querySelector('.output-unit');
+            
+            updateUnitSelectOptions(outputUnitSelect, quantityType);
+        }
+        
+        // 更新仪器误差单位选择器
+        function updateErrorUnitOptions(select, quantityType) {
+            updateUnitSelectOptions(select, quantityType);
+        }
+        
+        // 通用函数更新单位选择器选项
+        function updateUnitSelectOptions(select, quantityType) {
+            // 保存当前选中的值
+            const currentValue = select.value;
+            
+            // 清空选项
+            select.innerHTML = '';
+            
+            // 获取此物理量类型的单位系统
+            const system = unitSystems[quantityType];
+            if (!system) return;
+            
+            // 添加单位选项
+            for (const unit in system.units) {
+                const option = document.createElement('option');
+                option.value = unit;
+                option.textContent = unit || '无单位';
+                select.appendChild(option);
+            }
+            
+            // 尝试恢复选中的值，如果不存在则选择基准单位
+            if (currentValue && Array.from(select.options).some(opt => opt.value === currentValue)) {
+                select.value = currentValue;
+            } else {
+                select.value = system.base;
+            }
+        }
+
+        // 删除测量量
+        function removeMeasurement(groupId) {
+            const element = document.getElementById(`measurement-${groupId}`);
+            if (element) element.remove();
+        }
+        
+        // 删除间接测量量
+        function removeIndirectMeasurement(groupId) {
+            const element = document.getElementById(groupId);
+            if (element) element.remove();
+        }
+        
+        // 删除数据行
+        function removeDataRow(button) {
+            const row = button.parentElement;
+            if (row) row.remove();
+        }
+        
+        // 更新仪器误差
+        function updateInstrumentError(select) {
+            if (!select) return;
+            
+            const group = select.closest('.form-group');
+            const errorInput = group.querySelector('.instrument-error');
+            const errorUnitSelect = group.querySelector('.instrument-error-unit');
+            
+            switch (select.value) {
+                case 'vernier-caliper':
+                    errorInput.value = '0.02';
+                    selectUnitByValue(errorUnitSelect, 'mm');
+                    break;
+                case 'micrometer':
+                    errorInput.value = '0.01';
+                    selectUnitByValue(errorUnitSelect, 'mm');
+                    break;
+                case 'digital-multimeter':
+                    errorInput.value = '0.5';
+                    // 这里需要根据实际情况选择单位
+                    break;
+                case 'analog-multimeter':
+                    errorInput.value = '2.5';
+                    // 这里需要根据实际情况选择单位
+                    break;
+                case 'electronic-balance':
+                    errorInput.value = '0.001';
+                    selectUnitByValue(errorUnitSelect, 'g');
+                    break;
+                case 'stopwatch':
+                    errorInput.value = '0.1';
+                    selectUnitByValue(errorUnitSelect, 's');
+                    break;
+                case 'custom':
+                    errorInput.value = '';
+                    break;
+            }
+        }
+        
+        // 根据值选择选项
+        function selectUnitByValue(select, value) {
+            if (!select) return;
+            
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value === value) {
+                    select.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+        
+        // 收集直接测量数据
+        function collectDirectMeasurements() {
+            const container = document.getElementById('direct-measurements');
+            const groups = container.querySelectorAll('.form-group');
+            const data = {};
+            
+            groups.forEach((group, groupIndex) => {
+                const symbol = group.querySelector('.symbol').value || `x${groupIndex}`;
+                const quantityType = group.querySelector('.quantity-type').value;
+                const instrumentError = parseFloat(group.querySelector('.instrument-error').value) || 0;
+                const instrumentErrorUnit = group.querySelector('.instrument-error-unit').value;
+                
+                const dataRows = group.querySelectorAll('.data-value');
+                const unitSelects = group.querySelectorAll('.data-unit');
+                
+                // 确定基准单位（使用该物理量的基本单位）
+                const baseUnit = unitSystems[quantityType].base;
+                
+                const values = [];
+                const originalValues = [];
+                const originalUnits = [];
+                
+                dataRows.forEach((input, index) => {
+                    if (input.value !== '') {
+                        const value = parseFloat(input.value);
+                        const unit = unitSelects[index].value;
+                        
+                        // 存储原始值和单位
+                        originalValues.push(value);
+                        originalUnits.push(unit);
+                        
+                        // 将值转换为基准单位
+                        const convertedValue = convertUnit(value, unit, baseUnit, quantityType);
+                        values.push(convertedValue);
+                    }
+                });
+                
+                // 将仪器误差转换为基准单位
+                const convertedError = convertUnit(instrumentError, instrumentErrorUnit, baseUnit, quantityType);
+                
+                data[symbol] = {
+                    values,
+                    originalValues,
+                    originalUnits,
+                    quantityType,
+                    baseUnit,
+                    instrumentError: convertedError,
+                    originalInstrumentError: instrumentError,
+                    instrumentErrorUnit
+                };
+            });
+            
+            return data;
+        }
+        
+        // 计算所有结果
+        function calculateAll() {
+            const directData = collectDirectMeasurements();
+            let results = '';
+            
+            // 计算直接测量量的结果
+            for (const symbol in directData) {
+                const data = directData[symbol];
+                const stats = calculateStatistics(data.values);
+                
+                // 获取原始单位中最常用的一个，用于显示
+                const unitCounts = {};
+                data.originalUnits.forEach(unit => {
+                    unitCounts[unit] = (unitCounts[unit] || 0) + 1;
+                });
+                let mostCommonUnit = data.baseUnit;
+                let maxCount = 0;
+                for (const unit in unitCounts) {
+                    if (unitCounts[unit] > maxCount) {
+                        mostCommonUnit = unit;
+                        maxCount = unitCounts[unit];
+                    }
+                }
+                
+                // 将统计结果转换回常用单位
+                const meanInCommonUnit = convertUnit(stats.mean, data.baseUnit, mostCommonUnit, data.quantityType);
+                const stdDevInCommonUnit = convertUnit(stats.stdDev, data.baseUnit, mostCommonUnit, data.quantityType);
+                const uAInCommonUnit = convertUnit(stats.uA, data.baseUnit, mostCommonUnit, data.quantityType);
+                
+                // 计算B类不确定度（也转换为常用单位）
+                const uB = calculateUB(data.instrumentError);
+                const uBInCommonUnit = convertUnit(uB, data.baseUnit, mostCommonUnit, data.quantityType);
+                
+                // 计算合成不确定度
+                const combinedU = calculateCombinedU(stats.uA, uB);
+                const combinedUInCommonUnit = convertUnit(combinedU, data.baseUnit, mostCommonUnit, data.quantityType);
+                
+                // 计算相对不确定度
+                const relativeU = calculateRelativeU(combinedU, stats.mean);
+                
+                results += `
+                    <div class="result-group">
+                        <h3>${symbol} 的计算结果</h3>
+                        <p>物理量类型: ${getQuantityTypeName(data.quantityType)}</p>
+                        <p>显示单位: ${mostCommonUnit}</p>
+                        <p>平均值: ${meanInCommonUnit.toFixed(6)} ${mostCommonUnit}</p>
+                        <p>标准差: ${stdDevInCommonUnit.toFixed(6)} ${mostCommonUnit}</p>
+                        <p>A类不确定度: ${uAInCommonUnit.toFixed(6)} ${mostCommonUnit}</p>
+                        <p>B类不确定度: ${uBInCommonUnit.toFixed(6)} ${mostCommonUnit} (仪器误差: ${data.originalInstrumentError} ${data.instrumentErrorUnit})</p>
+                        <p>合成不确定度: ${combinedUInCommonUnit.toFixed(6)} ${mostCommonUnit}</p>
+                        <p>相对不确定度: ${relativeU.toFixed(2)}%</p>
+                    </div>
+                `;
+            }
+            
+            // 计算间接测量量的结果
+            results += calculateIndirectMeasurements(directData);
+            
+            document.getElementById('results').innerHTML = results;
+            
+            // 更新图表选择器
+            updateAxisSelectors();
+        }
+        
+        // 获取物理量类型的中文名称
+        function getQuantityTypeName(type) {
+            const names = {
+                'length': '长度',
+                'mass': '质量',
+                'time': '时间',
+                'current': '电流',
+                'voltage': '电压',
+                'temperature': '温度',
+                'angle': '角度',
+                'dimensionless': '无量纲'
+            };
+            return names[type] || type;
+        }
+        
+        // 计算统计量
+        function calculateStatistics(values) {
+            const n = values.length;
+            if (n === 0) return { mean: 0, stdDev: 0, uA: 0 };
+            
+            // 计算平均值
+            const sum = values.reduce((a, b) => a + b, 0);
+            const mean = sum / n;
+            
+            // 计算标准差
+            const squaredDiffs = values.map(value => Math.pow(value - mean, 2));
+            const variance = squaredDiffs.reduce((a, b) => a + b, 0) / (n - 1);
+            const stdDev = Math.sqrt(variance);
+            
+            // 计算A类不确定度 (标准误差)
+            const uA = stdDev / Math.sqrt(n);
+            
+            return { mean, stdDev, uA };
+        }
+        
+        // 计算B类不确定度
+        function calculateUB(instrumentError) {
+            return instrumentError / Math.sqrt(3); // 假设均匀分布
+        }
+        
+        // 计算合成不确定度
+        function calculateCombinedU(uA, uB) {
+            return Math.sqrt(Math.pow(uA, 2) + Math.pow(uB, 2));
+        }
+        
+        // 计算相对不确定度（百分比）
+        function calculateRelativeU(u, mean) {
+            if (mean === 0) return 0;
+            return (u / Math.abs(mean)) * 100;
+        }
+        
+        // 计算间接测量量
+        function calculateIndirectMeasurements(directData) {
+            const indirectContainer = document.getElementById('indirect-measurements');
+            const indirectGroups = indirectContainer.querySelectorAll('.form-group');
+            
+            let results = '';
+            
+            indirectGroups.forEach(group => {
+                const symbol = group.querySelector('.symbol').value;
+                const formulaText = group.querySelector('.formula').value;
+                const quantityType = group.querySelector('.quantity-type').value;
+                const outputUnit = group.querySelector('.output-unit').value;
+                
+                if (!symbol || !formulaText) return;
+                
+                try {
+                    // 准备公式
+                    const formula = math.compile(formulaText);
+                    
+                    // 生成数据组合
+                    const combinations = generateDataCombinations(directData);
+                    
+                    if (combinations.length > 0) {
+                        // 计算所有组合的结果
+                        const calculatedValues = combinations.map(combination => {
+                            return formula.evaluate(combination);
+                        });
+                        
+                        // 计算统计量
+                        const stats = calculateStatistics(calculatedValues);
+                        
+                        // 确定基准单位
+                        const baseUnit = unitSystems[quantityType].base;
+                        
+                        // 将结果转换到指定输出单位
+                        const meanInOutputUnit = convertUnit(stats.mean, baseUnit, outputUnit, quantityType);
+                        const stdDevInOutputUnit = convertUnit(stats.stdDev, baseUnit, outputUnit, quantityType);
+                        const uAInOutputUnit = convertUnit(stats.uA, baseUnit, outputUnit, quantityType);
+                        
+                        // 对于间接测量量，我们使用传播不确定度的近似方法
+                        const combinedU = stats.uA;  // 简化处理
+                        const combinedUInOutputUnit = convertUnit(combinedU, baseUnit, outputUnit, quantityType);
+                        
+                        // 计算相对不确定度
+                        const relativeU = calculateRelativeU(combinedU, stats.mean);
+                        
+                        results += `
+                            <div class="result-group">
+                                <h3>${symbol} 的计算结果</h3>
+                                <p>公式: ${formulaText}</p>
+                                <p>物理量类型: ${getQuantityTypeName(quantityType)}</p>
+                                <p>显示单位: ${outputUnit}</p>
+                                <p>平均值: ${meanInOutputUnit.toFixed(6)} ${outputUnit}</p>
+                                <p>标准差: ${stdDevInOutputUnit.toFixed(6)} ${outputUnit}</p>
+                                <p>A类不确定度: ${uAInOutputUnit.toFixed(6)} ${outputUnit}</p>
+                                <p>合成不确定度: ${combinedUInOutputUnit.toFixed(6)} ${outputUnit}</p>
+                                <p>相对不确定度: ${relativeU.toFixed(2)}%</p>
+                            </div>
+                        `;
+                    } else {
+                        results += `
+                            <div class="result-group">
+                                <h3>${symbol} 的计算结果</h3>
+                                <p class="error">错误: 没有足够的直接测量数据</p>
+                            </div>
+                        `;
+                    }
+                } catch (error) {
+                    results += `
+                        <div class="result-group">
+                            <h3>${symbol} 的计算结果</h3>
+                            <p class="error">错误: ${error.message}</p>
+                        </div>
+                    `;
+                }
+            });
+            
+            return results;
+        }
+
+        // 生成所有可能的数据组合
+        function generateDataCombinations(directData) {
+            const symbols = Object.keys(directData);
+            if (symbols.length === 0) return [];
+            
+            // 找出最小的数据点数量
+            const minDataPoints = Math.min(...symbols.map(symbol => directData[symbol].values.length));
+            
+            // 生成组合
+            const combinations = [];
+            for (let i = 0; i < minDataPoints; i++) {
+                const combination = {};
+                symbols.forEach(symbol => {
+                    combination[symbol] = directData[symbol].values[i];
+                });
+                combinations.push(combination);
+            }
+            
+            return combinations;
+        }
+
+        // 单位系统定义
+        const unitSystems = {
+            'length': {
+                'base': 'm',
+                'units': {
+                    'nm': 1e-9,
+                    'µm': 1e-6,
+                    'mm': 1e-3,
+                    'cm': 1e-2,
+                    'dm': 1e-1,
+                    'm': 1,
+                    'km': 1e3
+                }
+            },
+            'mass': {
+                'base': 'kg',
+                'units': {
+                    'µg': 1e-9,
+                    'mg': 1e-6,
+                    'g': 1e-3,
+                    'kg': 1
+                }
+            },
+            'time': {
+                'base': 's',
+                'units': {
+                    'µs': 1e-6,
+                    'ms': 1e-3,
+                    's': 1,
+                    'min': 60,
+                    'h': 3600
+                }
+            },
+            'current': {
+                'base': 'A',
+                'units': {
+                    'µA': 1e-6,
+                    'mA': 1e-3,
+                    'A': 1
+                }
+            },
+            'voltage': {
+                'base': 'V',
+                'units': {
+                    'µV': 1e-6,
+                    'mV': 1e-3,
+                    'V': 1
+                }
+            },
+            'temperature': {
+                'base': 'K',
+                'units': {
+                    'K': 1,
+                    '°C': { 
+                        toBase: (v) => v + 273.15, 
+                        fromBase: (v) => v - 273.15 
+                    }
+                }
+            },
+            'angle': {
+                'base': 'rad',
+                'units': {
+                    'rad': 1,
+                    'deg': Math.PI/180
+                }
+            },
+            'dimensionless': {
+                'base': '',
+                'units': {
+                    '': 1
+                }
+            }
+        };
+
+        // 单位转换函数
+        function convertUnit(value, fromUnit, toUnit, quantityType) {
+            if (fromUnit === toUnit) return value;
+            
+            const system = unitSystems[quantityType];
+            if (!system) return value;  // 未知物理量类型
+            
+            // 获取转换因子
+            const fromFactor = system.units[fromUnit];
+            const toFactor = system.units[toUnit];
+            
+            if (!fromFactor || !toFactor) return value;  // 未知单位
+            
+            // 特殊处理温度等非线性单位
+            if (typeof fromFactor === 'object' && typeof toFactor === 'object') {
+                return toFactor.fromBase(fromFactor.toBase(value));
+            } else if (typeof fromFactor === 'object') {
+                return fromFactor.toBase(value) / toFactor;
+            } else if (typeof toFactor === 'object') {
+                return toFactor.fromBase(value * fromFactor);
+            }
+            
+            // 默认线性转换
+            return value * fromFactor / toFactor;
+        }
+
+        // 更新坐标轴选择器
+        function updateAxisSelectors() {
+            const xAxisSelect = document.getElementById('x-axis-select');
+            const yAxisSelect = document.getElementById('y-axis-select');
+            const xAxisUnitSelect = document.getElementById('x-axis-unit');
+            const yAxisUnitSelect = document.getElementById('y-axis-unit');
+            
+            // 清空现有选项
+            xAxisSelect.innerHTML = '';
+            yAxisSelect.innerHTML = '';
+            
+            // 获取所有可用的变量
+            const directData = collectDirectMeasurements();
+            
+            // 添加直接测量量选项
+            for (const symbol in directData) {
+                xAxisSelect.innerHTML += `<option value="${symbol}">${symbol}</option>`;
+                yAxisSelect.innerHTML += `<option value="${symbol}">${symbol}</option>`;
+            }
+            
+            // 如果有两个或以上选项，默认选择不同的选项
+            if (xAxisSelect.options.length >= 2) {
+                xAxisSelect.selectedIndex = 0;
+                yAxisSelect.selectedIndex = 1;
+            }
+            
+            // 更新单位选择器
+            updateAxisUnitSelectors();
+        }
+
+        // 更新坐标轴单位选择器
+        function updateAxisUnitSelectors() {
+            const xAxisSelect = document.getElementById('x-axis-select');
+            const yAxisSelect = document.getElementById('y-axis-select');
+            const xAxisUnitSelect = document.getElementById('x-axis-unit');
+            const yAxisUnitSelect = document.getElementById('y-axis-unit');
+            
+            if (xAxisSelect.value && yAxisSelect.value) {
+                const directData = collectDirectMeasurements();
+                
+                // 更新X轴单位选择器
+                if (directData[xAxisSelect.value]) {
+                    const xQuantityType = directData[xAxisSelect.value].quantityType;
+                    populateUnitSelector(xAxisUnitSelect, xQuantityType);
+                }
+                
+                // 更新Y轴单位选择器
+                if (directData[yAxisSelect.value]) {
+                    const yQuantityType = directData[yAxisSelect.value].quantityType;
+                    populateUnitSelector(yAxisUnitSelect, yQuantityType);
+                }
+            }
+        }
+
+        // 监听坐标轴选择变化
+        document.getElementById('x-axis-select').addEventListener('change', updateAxisUnitSelectors);
+        document.getElementById('y-axis-select').addEventListener('change', updateAxisUnitSelectors);
+
+        // 绘制数据图表
+        function plotData() {
+            const xSymbol = document.getElementById('x-axis-select').value;
+            const ySymbol = document.getElementById('y-axis-select').value;
+            const xUnit = document.getElementById('x-axis-unit').value;
+            const yUnit = document.getElementById('y-axis-unit').value;
+            const showRegression = document.getElementById('regression-checkbox').checked;
+            
+            if (!xSymbol || !ySymbol) {
+                alert('请选择要绘制的数据');
+                return;
+            }
+            
+            const directData = collectDirectMeasurements();
+            const xData = directData[xSymbol].values;
+            const yData = directData[ySymbol].values;
+            const xQuantityType = directData[xSymbol].quantityType;
+            const yQuantityType = directData[ySymbol].quantityType;
+            const xBaseUnit = directData[xSymbol].baseUnit;
+            const yBaseUnit = directData[ySymbol].baseUnit;
+            
+            // 将数据转换为用户选择的单位
+            const convertedXData = xData.map(value => convertUnit(value, xBaseUnit, xUnit, xQuantityType));
+            const convertedYData = yData.map(value => convertUnit(value, yBaseUnit, yUnit, yQuantityType));
+            
+            // 确保两个变量有相同数量的数据点
+            const dataPoints = Math.min(convertedXData.length, convertedYData.length);
+            const plotXData = convertedXData.slice(0, dataPoints);
+            const plotYData = convertedYData.slice(0, dataPoints);
+            
+            // 创建数据点
+            const scatterData = {
+                datasets: [{
+                    label: `${ySymbol} (${yUnit}) vs ${xSymbol} (${xUnit})`,
+                    data: plotXData.map((x, i) => ({ x, y: plotYData[i] })),
+                    backgroundColor: 'rgba(74, 111, 165, 0.7)',
+                    borderColor: 'rgba(74, 111, 165, 1)',
+                    borderWidth: 1,
+                    pointRadius: 5,
+                    pointHoverRadius: 7
+                }]
+            };
+            
+            // 如果需要线性回归
+            if (showRegression && plotXData.length > 1) {
+                const { slope, intercept, r2 } = linearRegression(plotXData, plotYData);
+                
+                // 创建回归线数据
+                const minX = Math.min(...plotXData);
+                const maxX = Math.max(...plotXData);
+                const regressionPoints = [
+                    { x: minX, y: slope * minX + intercept },
+                    { x: maxX, y: slope * maxX + intercept }
+                ];
+                
+                scatterData.datasets.push({
+                    label: `线性回归: y = ${slope.toFixed(4)}x + ${intercept.toFixed(4)} (R² = ${r2.toFixed(4)})`,
+                    data: regressionPoints,
+                    type: 'line',
+                    fill: false,
+                    backgroundColor: 'rgba(255, 99, 132, 0.7)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 2,
+                    pointRadius: 0
+                });
+            }
+            
+            // 销毁旧图表
+            if (chart) {
+                chart.destroy();
+            }
+            
+            // 创建新图表
+            const ctx = document.getElementById('data-chart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'scatter',
+                data: scatterData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: `${xSymbol} (${xUnit})`
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: `${ySymbol} (${yUnit})`
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 线性回归计算
+        function linearRegression(x, y) {
+            const n = x.length;
+            let sumX = 0;
+            let sumY = 0;
+            let sumXY = 0;
+            let sumXX = 0;
+            let sumYY = 0;
+            
+            for (let i = 0; i < n; i++) {
+                sumX += x[i];
+                sumY += y[i];
+                sumXY += x[i] * y[i];
+                sumXX += x[i] * x[i];
+                sumYY += y[i] * y[i];
+            }
+            
+            const slope = (n * sumXY - sumX * sumY) / (n * sumXX - sumX * sumX);
+            const intercept = (sumY - slope * sumX) / n;
+            
+            // 计算R平方值
+            const yMean = sumY / n;
+            let totalVariation = 0;
+            let explainedVariation = 0;
+            
+            for (let i = 0; i < n; i++) {
+                totalVariation += Math.pow(y[i] - yMean, 2);
+                explainedVariation += Math.pow(slope * x[i] + intercept - yMean, 2);
+            }
+            
+            const r2 = explainedVariation / totalVariation;
+            
+            return { slope, intercept, r2 };
+        }
+
+        // 修复Bug：确保每个测量量的第一个值都有单位选择器
+        function addMeasurementGroup() {
+            const container = document.getElementById('direct-measurements');
+            const groupCount = container.querySelectorAll('.form-group').length;
+            
+            const newGroup = document.createElement('div');
+            newGroup.className = 'form-group';
+            newGroup.dataset.group = groupCount;
+            
+            newGroup.innerHTML = `
+                <div class="flex-container">
+                    <div class="flex-item">
+                        <label>测量量 ${groupCount + 1}</label>
+                        <div class="input-group">
+                            <label>符号：</label>
+                            <input type="text" class="symbol" placeholder="例如：L">
+                        </div>
+                        <div class="input-group">
+                            <label>物理量：</label>
+                            <select class="quantity-type" onchange="updateUnitSelectors(this)">
+                                <option value="length">长度</option>
+                                <option value="mass">质量</option>
+                                <option value="time">时间</option>
+                                <option value="current">电流</option>
+                                <option value="voltage">电压</option>
+                                <option value="temperature">温度</option>
+                                <option value="angle">角度</option>
+                                <option value="dimensionless">无量纲</option>
+                            </select>
+                        </div>
+                        <div class="instrument-selector">
+                            <div class="input-group">
+                                <label>测量仪器：</label>
+                                <select class="instrument-select" onchange="updateInstrumentError(this)">
+                                    <option value="custom">自定义</option>
+                                    <option value="ruler">直尺</option>
+                                    <option value="vernier">游标卡尺</option>
+                                    <option value="micrometer">千分尺</option>
+                                    <option value="scale">电子秤</option>
+                                    <option value="stopwatch">秒表</option>
+                                    <option value="multimeter">万用表</option>
+                                    <option value="thermometer">温度计</option>
+                                    <option value="protractor">量角器</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>仪器误差：</label>
+                                <input type="number" step="any" class="instrument-error" value="0.5">
+                                <select class="instrument-error-unit unit-select">
+                                    <!-- 会根据物理量类型动态填充 -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="data-rows">
+                            <!-- 数据行会在这里添加 -->
+                        </div>
+                        <button type="button" class="add-btn" onclick="addDataRow(${groupCount})">添加数据点</button>
+                    </div>
+                </div>
+                <button type="button" class="remove-btn" onclick="removeMeasurementGroup(this)">删除测量量</button>
+            `;
+            
+            container.appendChild(newGroup);
+            
+            // 初始化单位选择器
+            updateUnitSelectors(newGroup.querySelector('.quantity-type'));
+            
+            // 添加第一个数据行
+            addDataRow(groupCount);
+        }
+
+        // 修复Bug：确保单位选择器正确添加
+        function addDataRow(groupIndex) {
+            const group = document.querySelector(`.form-group[data-group="${groupIndex}"]`);
+            if (!group) return;
+            
+            const dataRows = group.querySelector('.data-rows');
+            const rowIndex = dataRows.children.length;
+            
+            const row = document.createElement('div');
+            row.className = 'input-group';
+            
+            // 获取当前物理量类型
+            const quantityType = group.querySelector('.quantity-type').value;
+            
+            row.innerHTML = `
+                <label>数据 ${rowIndex + 1}：</label>
+                <input type="number" step="any" class="data-value" placeholder="输入测量值">
+                <select class="data-unit unit-select">
+                    <!-- 单位选项会动态填充 -->
+                </select>
+                ${rowIndex > 0 ? '<button type="button" class="remove-btn" onclick="removeDataRow(this)">删除</button>' : ''}
+            `;
+            
+            dataRows.appendChild(row);
+            
+            // 填充单位选择器
+            const unitSelect = row.querySelector('.data-unit');
+            populateUnitSelector(unitSelect, quantityType);
+        }
+
+        // 填充单位选择器
+        function populateUnitSelector(selector, quantityType) {
+            selector.innerHTML = '';
+            
+            const system = unitSystems[quantityType];
+            if (!system) return;
+            
+            for (const unit in system.units) {
+                // 跳过函数形式的单位处理
+                if (typeof system.units[unit] === 'object') {
+                    selector.innerHTML += `<option value="${unit}">${unit}</option>`;
+                } else {
+                    selector.innerHTML += `<option value="${unit}">${unit}</option>`;
+                }
+            }
+            
+            // 默认选择基本单位
+            const baseUnit = system.base;
+            for (let i = 0; i < selector.options.length; i++) {
+                if (selector.options[i].value === baseUnit) {
+                    selector.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // 更新所有单位选择器
+        function updateUnitSelectors(selectElement) {
+            const group = selectElement.closest('.form-group');
+            const quantityType = selectElement.value;
+            
+            // 更新仪器误差单位选择器
+            const errorUnitSelect = group.querySelector('.instrument-error-unit');
+            populateUnitSelector(errorUnitSelect, quantityType);
+            
+            // 更新所有数据单位选择器
+            const unitSelectors = group.querySelectorAll('.data-unit');
+            unitSelectors.forEach(selector => {
+                populateUnitSelector(selector, quantityType);
+            });
+        }
+
+        // 更新仪器误差
+        function updateInstrumentError(selectElement) {
+            const group = selectElement.closest('.form-group');
+            const errorInput = group.querySelector('.instrument-error');
+            const errorUnitSelect = group.querySelector('.instrument-error-unit');
+            const quantityType = group.querySelector('.quantity-type').value;
+            
+            // 根据选择的仪器设置默认误差
+            const instrumentType = selectElement.value;
+            let errorValue = 0;
+            let errorUnit = '';
+            
+            switch (instrumentType) {
+                case 'ruler':
+                    errorValue = 0.5;
+                    errorUnit = 'mm';
+                    break;
+                case 'vernier':
+                    errorValue = 0.02;
+                    errorUnit = 'mm';
+                    break;
+                case 'micrometer':
+                    errorValue = 0.001;
+                    errorUnit = 'mm';
+                    break;
+                case 'scale':
+                    errorValue = 0.1;
+                    errorUnit = 'g';
+                    break;
+                case 'stopwatch':
+                    errorValue = 0.1;
+                    errorUnit = 's';
+                    break;
+                case 'multimeter':
+                    errorValue = 0.01;
+                    errorUnit = quantityType === 'voltage' ? 'V' : 'mA';
+                    break;
+                case 'thermometer':
+                    errorValue = 0.5;
+                    errorUnit = '°C';
+                    break;
+                case 'protractor':
+                    errorValue = 1;
+                    errorUnit = 'deg';
+                    break;
+                default:
+                    return; // 自定义不改变现有值
+            }
+            
+            errorInput.value = errorValue;
+            
+            // 选择对应的单位
+            for (let i = 0; i < errorUnitSelect.options.length; i++) {
+                if (errorUnitSelect.options[i].value === errorUnit) {
+                    errorUnitSelect.selectedIndex = i;
+                    break;
+                }
+            }
+        }
+
+        // 删除测量量组
+        function removeMeasurementGroup(button) {
+            const group = button.closest('.form-group');
+            group.remove();
+            
+            // 重新编号
+            const groups = document.querySelectorAll('#direct-measurements .form-group');
+            groups.forEach((g, index) => {
+                g.dataset.group = index;
+                g.querySelector('label').textContent = `测量量 ${index + 1}`;
+                
+                // 更新添加数据按钮的事件处理
+                const addButton = g.querySelector('.add-btn');
+                addButton.setAttribute('onclick', `addDataRow(${index})`);
+            });
+        }
+
+        // 删除数据行
+        function removeDataRow(button) {
+            const row = button.closest('.input-group');
+            const dataRows = row.parentElement;
+            row.remove();
+            
+            // 重新编号
+            const rows = dataRows.querySelectorAll('.input-group');
+            rows.forEach((r, index) => {
+                const label = r.querySelector('label');
+                label.textContent = `数据 ${index + 1}：`;
+            });
+        }
+
+        // 添加间接测量量
+        function addIndirectMeasurement() {
+            const container = document.getElementById('indirect-measurements');
+            const groupCount = container.querySelectorAll('.form-group').length;
+            
+            const newGroup = document.createElement('div');
+            newGroup.className = 'form-group';
+            
+            newGroup.innerHTML = `
+                <label>间接测量量 ${groupCount + 1}</label>
+                <div class="input-group">
+                    <label>符号：</label>
+                    <input type="text" class="symbol" placeholder="例如：A">
+                </div>
+                <div class="input-group">
+                    <label>公式：</label>
+                    <input type="text" class="formula" placeholder="例如：L*W（使用直接测量量的符号）">
+                </div>
+                <div class="input-group">
+                    <label>物理量：</label>
+                    <select class="quantity-type" onchange="updateIndirectUnitSelector(this)">
+                        <option value="length">长度</option>
+                        <option value="mass">质量</option>
+                        <option value="time">时间</option>
+                        <option value="current">电流</option>
+                        <option value="voltage">电压</option>
+                        <option value="temperature">温度</option>
+                        <option value="angle">角度</option>
+                        <option value="dimensionless">无量纲</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>输出单位：</label>
+                    <select class="output-unit unit-select">
+                        <!-- 单位会动态填充 -->
+                    </select>
+                </div>
+                <button type="button" class="remove-btn" onclick="removeIndirectMeasurement(this)">删除</button>
+            `;
+            
+            container.appendChild(newGroup);
+            
+            // 填充输出单位选择器
+            updateIndirectUnitSelector(newGroup.querySelector('.quantity-type'));
+        }
+
+        // 更新间接测量量的单位选择器
+        function updateIndirectUnitSelector(selectElement) {
+            const group = selectElement.closest('.form-group');
+            const quantityType = selectElement.value;
+            const outputUnitSelect = group.querySelector('.output-unit');
+            
+            populateUnitSelector(outputUnitSelect, quantityType);
+        }
+
+        // 删除间接测量量
+        function removeIndirectMeasurement(button) {
+            const group = button.closest('.form-group');
+            group.remove();
+            
+            // 重新编号
+            const groups = document.querySelectorAll('#indirect-measurements .form-group');
+            groups.forEach((g, index) => {
+                g.querySelector('label').textContent = `间接测量量 ${index + 1}`;
+            });
+        }
+        
+        // 初始化
+        function init() {
+            // 添加第一个测量量组
+            addMeasurementGroup();
+        }
+
+        // 页面加载完成后初始化
+        window.onload = init;
+    </script>
+</body>
+</html>
