@@ -401,6 +401,213 @@
             font-size: 0.9em;
             line-height: 1.5;
         }
+
+        /* 批量计算样式 */
+        .formula-input {
+            width: 60%;
+            font-family: 'Courier New', monospace;
+        }
+
+        .small-btn {
+            padding: 6px 12px;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+
+        .red-btn {
+            background: #dc3545;
+        }
+
+        .constants-container, .variables-container, .batch-results {
+            margin-top: 20px;
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .constants-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .constant-item {
+            display: flex;
+            align-items: center;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .constant-item input {
+            width: 40%;
+            margin: 0 8px;
+        }
+
+        .variables-header {
+            display: flex;
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 4px 4px 0 0;
+            font-weight: bold;
+        }
+
+        .variables-data {
+            margin-bottom: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .variable-row {
+            display: flex;
+            background: white;
+            padding: 8px 10px;
+            border-bottom: 1px solid #eee;
+            align-items: center;
+        }
+
+        .variable-row:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .variable-cell {
+            flex: 1;
+            padding: 0 5px;
+        }
+
+        .variable-cell input {
+            width: 100%;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .batch-results-container {
+            margin-top: 15px;
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .results-table th, .results-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .results-table th {
+            background: #e9ecef;
+            font-weight: bold;
+        }
+
+        .results-summary {
+            margin-top: 15px;
+            padding: 10px;
+            background: #049ab7;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .remove-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            width: 24px;
+            height: 24px;
+            font-size: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 导入变量模态框样式 */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-close {
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .variable-choice {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+        }
+
+        .variable-choice input[type="checkbox"] {
+            margin-right: 10px;
+        }
+
+        .variable-choice-label {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .variable-choice-data {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .modal-footer {
+            margin-top: 20px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .cell-actions {
+            width: 30px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -459,6 +666,53 @@
             <button type="button" id="calculate-btn" class="add-btn">计算</button>
             <div id="results-container" class="results-container">
                 <div class="placeholder-message">点击"计算"按钮查看结果</div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">批量计算</h2>
+            <div class="form-group">
+                <div class="input-group">
+                    <label>计算公式：</label>
+                    <input type="text" id="batch-formula" placeholder="例如: (v2^2-v1^2)*L/(2*S*h)" class="formula-input">
+                    <button type="button" id="validate-formula-btn" class="small-btn">验证公式</button>
+                </div>
+                
+                <div class="constants-container">
+                    <h3>常量设置</h3>
+                    <div class="constants-list" id="constants-list">
+                        <!-- 常量将被动态添加 -->
+                    </div>
+                    <div class="input-group">
+                        <input type="text" id="constant-name" placeholder="常量名称" style="width: 120px;">
+                        <input type="number" id="constant-value" placeholder="常量值" style="width: 120px;">
+                        <button type="button" id="add-constant-btn" class="small-btn">添加常量</button>
+                    </div>
+                </div>
+                
+                <div class="variables-container" style="display: none;">
+                    <h3>变量数据</h3>
+                    <div class="variables-header" id="variables-header">
+                        <!-- 变量表头将被动态添加 -->
+                    </div>
+                    <div class="variables-data" id="variables-data">
+                        <!-- 变量数据行将被动态添加 -->
+                    </div>
+                    <div class="button-group">
+                        <button type="button" id="add-variable-row-btn" class="small-btn">添加数据行</button>
+                        <button type="button" id="import-variable-btn" class="small-btn">导入已有变量</button>
+                        <button type="button" id="clear-variables-btn" class="small-btn red-btn">清空数据</button>
+                    </div>
+                </div>
+                
+                <button type="button" id="batch-calculate-btn" class="add-btn" style="margin-top: 20px; display: none;">批量计算</button>
+                
+                <div class="batch-results" id="batch-results" style="display: none;">
+                    <h3>计算结果</h3>
+                    <div class="batch-results-container" id="batch-results-container">
+                        <!-- 计算结果将显示在这里 -->
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -613,7 +867,7 @@
                 <select class="data-unit unit-select">
                     <!-- 单位选项会动态填充 -->
                 </select>
-                ${rowIndex > 0 ? '<button type="button" class="remove-btn">删除</button>' : ''}
+                ${rowIndex > 0 ? '<button type="button" class="remove-btn">x</button>' : ''}
             `;
             
             dataRows.appendChild(row);
@@ -705,7 +959,7 @@
                     </div>
                     <button type="button" class="add-btn">添加数据点</button>
                 </div>
-                <button type="button" class="remove-btn">删除测量量</button>
+                <button type="button" class="remove-btn">x</button>
             `;
             
             container.appendChild(newGroup);
@@ -866,7 +1120,7 @@
                         <!-- 单位会动态填充 -->
                     </select>
                 </div>
-                <button type="button" class="remove-btn">删除</button>
+                <button type="button" class="remove-btn">x</button>
             `;
             
             container.appendChild(newGroup);
@@ -1699,6 +1953,609 @@
 
         // 页面加载完成后初始化
         window.onload = init;
+
+        // 批量计算功能
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取DOM元素
+            const batchFormulaInput = document.getElementById('batch-formula');
+            const validateFormulaBtn = document.getElementById('validate-formula-btn');
+            const constantsList = document.getElementById('constants-list');
+            const constantNameInput = document.getElementById('constant-name');
+            const constantValueInput = document.getElementById('constant-value');
+            const addConstantBtn = document.getElementById('add-constant-btn');
+            const variablesContainer = document.querySelector('.variables-container');
+            const variablesHeader = document.getElementById('variables-header');
+            const variablesData = document.getElementById('variables-data');
+            const addVariableRowBtn = document.getElementById('add-variable-row-btn');
+            const importVariableBtn = document.getElementById('import-variable-btn');
+            const clearVariablesBtn = document.getElementById('clear-variables-btn');
+            const batchCalculateBtn = document.getElementById('batch-calculate-btn');
+            const batchResults = document.getElementById('batch-results');
+            const batchResultsContainer = document.getElementById('batch-results-container');
+            
+            // 存储常量和变量
+            let constants = {};
+            let variables = [];
+            let formula = '';
+            
+            // 为验证公式按钮添加事件
+            validateFormulaBtn.addEventListener('click', function() {
+                formula = batchFormulaInput.value.trim();
+                if (!formula) {
+                    alert('请输入计算公式');
+                    return;
+                }
+                
+                // 解析公式中的变量
+                const symbols = extractSymbolsFromFormula(formula);
+                
+                // 过滤掉已设置为常量的符号
+                variables = symbols.filter(symbol => !constants[symbol]);
+                
+                // 显示变量数据区域
+                setupVariablesTable();
+                variablesContainer.style.display = 'block';
+                batchCalculateBtn.style.display = 'block';
+                
+                alert(`公式已验证，识别到变量：${variables.join(', ')}`);
+            });
+            
+            // 提取公式中的变量和常量
+            function extractSymbolsFromFormula(formula) {
+                // 移除所有数学运算符、数字和空格
+                const cleaned = formula.replace(/[\d\s\+\-\*\/\(\)\^\.,]/g, ' ');
+                
+                // 按空格分割并过滤空字符串
+                const symbols = cleaned.split(' ').filter(s => s.length > 0);
+                
+                // 去重
+                return [...new Set(symbols)];
+            }
+            
+            // 为添加常量按钮添加事件
+            addConstantBtn.addEventListener('click', function() {
+                const name = constantNameInput.value.trim();
+                const value = parseFloat(constantValueInput.value);
+                
+                if (!name) {
+                    alert('请输入常量名称');
+                    return;
+                }
+                
+                if (isNaN(value)) {
+                    alert('请输入有效的常量值');
+                    return;
+                }
+                
+                // 存储常量
+                constants[name] = value;
+                
+                // 更新常量列表UI
+                updateConstantsList();
+                
+                // 清空输入框
+                constantNameInput.value = '';
+                constantValueInput.value = '';
+                
+                // 如果公式已验证，更新变量列表（排除新添加的常量）
+                if (formula) {
+                    variables = variables.filter(v => v !== name);
+                    setupVariablesTable();
+                }
+            });
+            
+            // 更新常量列表UI
+            function updateConstantsList() {
+                constantsList.innerHTML = '';
+                
+                for (const [name, value] of Object.entries(constants)) {
+                    const constantItem = document.createElement('div');
+                    constantItem.className = 'constant-item';
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.textContent = name + ' = ';
+                    constantItem.appendChild(nameSpan);
+                    
+                    const valueInput = document.createElement('input');
+                    valueInput.type = 'number';
+                    valueInput.value = value;
+                    valueInput.addEventListener('change', function() {
+                        constants[name] = parseFloat(this.value);
+                    });
+                    constantItem.appendChild(valueInput);
+                    
+                    const removeBtn = document.createElement('button');
+                    removeBtn.innerHTML = '×';
+                    removeBtn.className = 'remove-btn';
+                    removeBtn.addEventListener('click', function() {
+                        delete constants[name];
+                        updateConstantsList();
+                        
+                        // 公式已验证，需要重新检查是否该符号应该添加回变量列表
+                        if (formula) {
+                            const symbols = extractSymbolsFromFormula(formula);
+                            if (symbols.includes(name) && !variables.includes(name)) {
+                                variables.push(name);
+                                setupVariablesTable();
+                            }
+                        }
+                    });
+                    constantItem.appendChild(removeBtn);
+                    
+                    constantsList.appendChild(constantItem);
+                }
+            }
+            
+            // 设置变量表格
+            function setupVariablesTable() {
+                // 设置表头
+                variablesHeader.innerHTML = '';
+                
+                const indexHeader = document.createElement('div');
+                indexHeader.className = 'variable-cell';
+                indexHeader.style.width = '40px';
+                indexHeader.textContent = '序号';
+                variablesHeader.appendChild(indexHeader);
+                
+                variables.forEach(variable => {
+                    const header = document.createElement('div');
+                    header.className = 'variable-cell';
+                    header.textContent = variable;
+                    variablesHeader.appendChild(header);
+                });
+                
+                const actionsHeader = document.createElement('div');
+                actionsHeader.className = 'cell-actions';
+                actionsHeader.textContent = '';
+                variablesHeader.appendChild(actionsHeader);
+                
+                // 清空已有数据行
+                variablesData.innerHTML = '';
+                
+                // 添加一行空数据
+                addVariableRow();
+            }
+            
+            // 添加变量数据行
+            function addVariableRow() {
+                const rowIndex = variablesData.children.length + 1;
+                
+                const row = document.createElement('div');
+                row.className = 'variable-row';
+                
+                const indexCell = document.createElement('div');
+                indexCell.className = 'variable-cell';
+                indexCell.style.width = '40px';
+                indexCell.textContent = rowIndex;
+                row.appendChild(indexCell);
+                
+                variables.forEach(variable => {
+                    const cell = document.createElement('div');
+                    cell.className = 'variable-cell';
+                    
+                    const input = document.createElement('input');
+                    input.type = 'number';
+                    input.step = 'any';
+                    input.dataset.variable = variable;
+                    cell.appendChild(input);
+                    
+                    row.appendChild(cell);
+                });
+                
+                const actionsCell = document.createElement('div');
+                actionsCell.className = 'cell-actions';
+                
+                const removeBtn = document.createElement('button');
+                removeBtn.innerHTML = '×';
+                removeBtn.className = 'remove-btn';
+                removeBtn.addEventListener('click', function() {
+                    row.remove();
+                    // 更新所有行的序号
+                    updateRowIndices();
+                });
+                actionsCell.appendChild(removeBtn);
+                
+                row.appendChild(actionsCell);
+                
+                variablesData.appendChild(row);
+            }
+            
+            // 更新行序号
+            function updateRowIndices() {
+                const rows = variablesData.querySelectorAll('.variable-row');
+                rows.forEach((row, index) => {
+                    const indexCell = row.querySelector('.variable-cell:first-child');
+                    indexCell.textContent = index + 1;
+                });
+            }
+            
+            // 为添加数据行按钮添加事件
+            addVariableRowBtn.addEventListener('click', function() {
+                addVariableRow();
+            });
+            
+            // 为清空数据按钮添加事件
+            clearVariablesBtn.addEventListener('click', function() {
+                if (confirm('确定要清空所有数据行吗？')) {
+                    variablesData.innerHTML = '';
+                    addVariableRow(); // 添加一个空行
+                }
+            });
+            
+            // 为导入变量按钮添加事件
+            importVariableBtn.addEventListener('click', function() {
+                showImportVariableModal();
+            });
+            
+            // 显示导入变量模态框
+            function showImportVariableModal() {
+                // 创建模态框
+                let modal = document.getElementById('import-variable-modal');
+                if (!modal) {
+                    modal = document.createElement('div');
+                    modal.id = 'import-variable-modal';
+                    modal.className = 'modal';
+                    
+                    document.body.appendChild(modal);
+                }
+                
+                // 获取已有结果中的变量
+                const existingVariables = findExistingVariables();
+                
+                // 如果没有找到变量
+                if (Object.keys(existingVariables).length === 0) {
+                    alert('没有找到可导入的变量，请先计算一些结果');
+                    return;
+                }
+                
+                // 创建模态框内容
+                modal.innerHTML = `
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h3>导入已有变量</h3>
+                            <span class="modal-close">&times;</span>
+                        </div>
+                        <div id="variable-choices">
+                            ${createVariableChoicesHTML(existingVariables)}
+                        </div>
+                        <div class="modal-footer">
+                            <button id="import-selected-btn" class="small-btn">导入选中项</button>
+                        </div>
+                    </div>
+                `;
+                
+                // 显示模态框
+                modal.style.display = 'block';
+                
+                // 关闭模态框
+                modal.querySelector('.modal-close').addEventListener('click', function() {
+                    modal.style.display = 'none';
+                });
+                
+                // 导入选中的变量
+                modal.querySelector('#import-selected-btn').addEventListener('click', function() {
+                    const selectedVariables = {};
+                    
+                    // 获取所有选中的变量
+                    const checkboxes = modal.querySelectorAll('input[type="checkbox"]:checked');
+                    checkboxes.forEach(checkbox => {
+                        const symbol = checkbox.value;
+                        const values = JSON.parse(checkbox.dataset.values);
+                        selectedVariables[symbol] = values;
+                    });
+                    
+                    // 导入变量
+                    importSelectedVariables(selectedVariables);
+                    
+                    // 关闭模态框
+                    modal.style.display = 'none';
+                });
+            }
+            
+            // 查找页面中已有的变量
+            function findExistingVariables() {
+                const existingVariables = {};
+                
+                // 从结果卡片中获取变量
+                const resultCards = document.querySelectorAll('.result-card');
+                resultCards.forEach(card => {
+                    const symbol = card.querySelector('.symbol').textContent.trim();
+                    const valueText = card.querySelector('.result-row:first-child .result-value').textContent;
+                    const numericValue = parseFloat(valueText);
+                    
+                    if (!isNaN(numericValue) && variables.includes(symbol)) {
+                        existingVariables[symbol] = [numericValue];
+                    }
+                });
+                
+                // 从直接测量量中获取变量
+                const directGroups = document.querySelectorAll('#direct-measurements .form-group');
+                directGroups.forEach(group => {
+                    const symbol = group.querySelector('.symbol').value.trim();
+                    if (variables.includes(symbol)) {
+                        const values = [];
+                        const dataRows = group.querySelectorAll('.data-rows .input-group');
+                        
+                        dataRows.forEach(row => {
+                            const value = parseFloat(row.querySelector('.data-value').value);
+                            if (!isNaN(value)) {
+                                values.push(value);
+                            }
+                        });
+                        
+                        if (values.length > 0) {
+                            existingVariables[symbol] = values;
+                        }
+                    }
+                });
+                
+                return existingVariables;
+            }
+            
+            // 创建变量选择项HTML
+            function createVariableChoicesHTML(existingVariables) {
+                let html = '';
+                
+                for (const [symbol, values] of Object.entries(existingVariables)) {
+                    const valuesJSON = JSON.stringify(values);
+                    
+                    html += `
+                        <div class="variable-choice">
+                            <input type="checkbox" id="var-${symbol}" value="${symbol}" data-values='${valuesJSON}'>
+                            <label for="var-${symbol}">
+                                <span class="variable-choice-label">${symbol}</span>
+                                <span class="variable-choice-data">[${values.join(', ')}]</span>
+                            </label>
+                        </div>
+                    `;
+                }
+                
+                return html;
+            }
+            
+            // 导入选中的变量
+            function importSelectedVariables(selectedVariables) {
+                // 清空现有数据行
+                variablesData.innerHTML = '';
+                
+                // 确定需要创建的行数
+                let maxRowCount = 0;
+                for (const values of Object.values(selectedVariables)) {
+                    maxRowCount = Math.max(maxRowCount, values.length);
+                }
+                
+                // 创建数据行
+                for (let i = 0; i < maxRowCount; i++) {
+                    addVariableRow();
+                }
+                
+                // 填充数据
+                const rows = variablesData.querySelectorAll('.variable-row');
+                rows.forEach((row, rowIndex) => {
+                    const inputs = row.querySelectorAll('input[data-variable]');
+                    
+                    inputs.forEach(input => {
+                        const variable = input.dataset.variable;
+                        if (selectedVariables[variable] && rowIndex < selectedVariables[variable].length) {
+                            input.value = selectedVariables[variable][rowIndex];
+                        }
+                    });
+                });
+            }
+            
+            // 为批量计算按钮添加事件
+            batchCalculateBtn.addEventListener('click', function() {
+                if (!formula) {
+                    alert('请先验证公式');
+                    return;
+                }
+                
+                if (variables.length === 0) {
+                    alert('没有变量可计算');
+                    return;
+                }
+                
+                // 执行批量计算
+                performBatchCalculation();
+            });
+            
+            // 执行批量计算
+            function performBatchCalculation() {
+                // 显示结果区域
+                batchResults.style.display = 'block';
+                
+                // 获取所有数据行
+                const rows = variablesData.querySelectorAll('.variable-row');
+                const rowsData = [];
+                
+                rows.forEach(row => {
+                    const rowData = {};
+                    
+                    // 获取所有变量值
+                    variables.forEach(variable => {
+                        const input = row.querySelector(`input[data-variable="${variable}"]`);
+                        const value = input ? parseFloat(input.value) : null;
+                        rowData[variable] = isNaN(value) ? null : value;
+                    });
+                    
+                    // 只添加至少有一个有效值的行
+                    const hasValidValue = Object.values(rowData).some(value => value !== null);
+                    if (hasValidValue) {
+                        rowsData.push(rowData);
+                    }
+                });
+                
+                if (rowsData.length === 0) {
+                    alert('没有有效的数据行');
+                    return;
+                }
+                
+                // 执行计算
+                const results = [];
+                let sum = 0;
+                let validCount = 0;
+                
+                rowsData.forEach((rowData, index) => {
+                    try {
+                        // 检查是否所有必需的变量都有值
+                        const missingVariables = variables.filter(v => rowData[v] === null || rowData[v] === undefined);
+                        if (missingVariables.length > 0) {
+                            results.push({
+                                rowIndex: index + 1,
+                                value: null,
+                                error: `缺少变量: ${missingVariables.join(', ')}`
+                            });
+                            return;
+                        }
+                        
+                        // 创建包含常量和变量的完整上下文
+                        const context = { ...constants, ...rowData };
+                        
+                        // 使用math.js或自定义函数计算
+                        const result = evaluateFormula(formula, context);
+                        
+                        if (!isNaN(result)) {
+                            sum += result;
+                            validCount++;
+                            
+                            results.push({
+                                rowIndex: index + 1,
+                                value: result,
+                                error: null
+                            });
+                        } else {
+                            results.push({
+                                rowIndex: index + 1,
+                                value: null,
+                                error: '计算结果无效'
+                            });
+                        }
+                    } catch (error) {
+                        results.push({
+                            rowIndex: index + 1,
+                            value: null,
+                            error: error.message
+                        });
+                    }
+                });
+                
+                // 显示结果
+                displayBatchResults(results, sum, validCount);
+            }
+            
+            // 计算公式
+            function evaluateFormula(formula, context) {
+                // 替换变量为实际值
+                let expression = formula;
+                
+                // 替换所有变量和常量
+                for (const [name, value] of Object.entries(context)) {
+                    // 使用正则表达式确保只替换完整的变量名
+                    const regex = new RegExp('\\b' + name + '\\b', 'g');
+                    expression = expression.replace(regex, value);
+                }
+                
+                // 替换数学函数
+                expression = expression.replace(/\^/g, '**'); // 将^替换为**用于幂运算
+                
+                // 使用eval计算（在实际应用中应使用更安全的方法如math.js）
+                try {
+                    return Function('"use strict";return (' + expression + ')')();
+                } catch (e) {
+                    throw new Error('计算错误: ' + e.message);
+                }
+            }
+            
+            // 显示批量计算结果
+            function displayBatchResults(results, sum, validCount) {
+                batchResultsContainer.innerHTML = '';
+                
+                // 计算统计数据
+                const mean = validCount > 0 ? sum / validCount : 0;
+                
+                // 计算标准差
+                let sumSquaredDiff = 0;
+                results.forEach(result => {
+                    if (result.value !== null) {
+                        sumSquaredDiff += Math.pow(result.value - mean, 2);
+                    }
+                });
+                const variance = validCount > 1 ? sumSquaredDiff / (validCount - 1) : 0;
+                const stdDev = Math.sqrt(variance);
+                
+                // 创建结果表格
+                const table = document.createElement('table');
+                table.className = 'results-table';
+                
+                // 表头
+                const thead = document.createElement('thead');
+                const headerRow = document.createElement('tr');
+                
+                const headerIndex = document.createElement('th');
+                headerIndex.textContent = '序号';
+                headerRow.appendChild(headerIndex);
+                
+                const headerValue = document.createElement('th');
+                headerValue.textContent = '计算结果';
+                headerRow.appendChild(headerValue);
+                
+                const headerStatus = document.createElement('th');
+                headerStatus.textContent = '状态';
+                headerRow.appendChild(headerStatus);
+                
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+                
+                // 表体
+                const tbody = document.createElement('tbody');
+                
+                results.forEach(result => {
+                    const row = document.createElement('tr');
+                    
+                    const cellIndex = document.createElement('td');
+                    cellIndex.textContent = result.rowIndex;
+                    row.appendChild(cellIndex);
+                    
+                    const cellValue = document.createElement('td');
+                    if (result.value !== null) {
+                        cellValue.textContent = result.value.toFixed(6);
+                    } else {
+                        cellValue.textContent = '-';
+                        cellValue.style.color = '#dc3545';
+                    }
+                    row.appendChild(cellValue);
+                    
+                    const cellStatus = document.createElement('td');
+                    if (result.error) {
+                        cellStatus.textContent = result.error;
+                        cellStatus.style.color = '#dc3545';
+                    } else {
+                        cellStatus.textContent = '成功';
+                        cellStatus.style.color = '#28a745';
+                    }
+                    row.appendChild(cellStatus);
+                    
+                    tbody.appendChild(row);
+                });
+                
+                table.appendChild(tbody);
+                batchResultsContainer.appendChild(table);
+                
+                // 显示统计信息
+                const summaryDiv = document.createElement('div');
+                summaryDiv.className = 'results-summary';
+                
+                summaryDiv.innerHTML = `
+                    <strong>统计信息：</strong><br>
+                    有效数据数: ${validCount}<br>
+                    平均值: ${mean.toFixed(6)}<br>
+                    标准差: ${stdDev.toFixed(6)}<br>
+                    不确定度(A类): ${(stdDev / Math.sqrt(validCount)).toFixed(6)}
+                `;
+                
+                batchResultsContainer.appendChild(summaryDiv);
+            }
+        });
     </script>
 </body>
 </html>
