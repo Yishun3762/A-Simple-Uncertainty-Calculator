@@ -6,6 +6,7 @@
     <title>科学测量数据处理</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/mathjs@11.8.0/lib/browser/math.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
     <style>
         :root {
             --primary-color: #4a6fa5;
@@ -2445,22 +2446,17 @@
             
             // 计算公式
             function evaluateFormula(formula, context) {
-                // 替换变量为实际值
-                let expression = formula;
-                
-                // 替换所有变量和常量
-                for (const [name, value] of Object.entries(context)) {
-                    // 使用正则表达式确保只替换完整的变量名
-                    const regex = new RegExp('\\b' + name + '\\b', 'g');
-                    expression = expression.replace(regex, value);
-                }
-                
-                // 替换数学函数
-                expression = expression.replace(/\^/g, '**'); // 将^替换为**用于幂运算
-                
-                // 使用eval计算（在实际应用中应使用更安全的方法如math.js）
                 try {
-                    return Function('"use strict";return (' + expression + ')')();
+                    // 创建一个mathjs求值上下文
+                    const mathScope = {};
+                    
+                    // 添加所有变量和常量到上下文
+                    for (const [name, value] of Object.entries(context)) {
+                        mathScope[name] = value;
+                    }
+                    
+                    // 使用math.js安全地计算表达式
+                    return math.evaluate(formula, mathScope);
                 } catch (e) {
                     throw new Error('计算错误: ' + e.message);
                 }
