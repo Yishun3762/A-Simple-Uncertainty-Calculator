@@ -32,9 +32,6 @@ git clone https://github.com/Yishun3762/A-Simple-Uncertainty-Calculator.git
 4. 推送到分支 (`git push origin feature/AmazingFeature`)
 5. 开启一个 Pull Request
 
-## 许可证
-本项目采用 MIT 许可证 - 详情请参阅 [LICENSE](LICENSE) 文件。
-
 ## 联系方式
 如有任何问题或建议，请通过 GitHub Issues 与我联系。
 
